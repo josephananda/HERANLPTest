@@ -3,7 +3,6 @@ package com.jadeappstudio.heranlptest
 import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
@@ -12,7 +11,7 @@ import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class PredictActivity : AppCompatActivity() {
     // Name of TFLite model ( in /assets folder ).
     private val MODEL_ASSETS_PATH = "model.tflite"
 
@@ -22,7 +21,7 @@ class MainActivity : AppCompatActivity() {
     private var tfLiteInterpreter : Interpreter? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_predict)
 
         // Init the classifier.
         val classifier = Classifier( this , "word_dict.json" , INPUT_MAXLEN )
@@ -42,13 +41,13 @@ class MainActivity : AppCompatActivity() {
 
         btnPredict.setOnClickListener {
 
-            var tokenizedMessage = classifier.tokenize(etTweetText.editText!!.text.toString().toLowerCase().trim())
+            val tokenizedMessage = classifier.tokenize(etTweetText.editText!!.text.toString().toLowerCase().trim())
             //var paddedMessage = classifier.padSequence(tokenizedMessage)
-            var results = classifySequence(tokenizedMessage)
+            val results = classifySequence(tokenizedMessage)
 
-            var highest = results.maxOrNull()
-            var idxLabel = results.indexOfFirst { it == highest!! }
-            var finalLabel = findLabel(idxLabel)
+            val highest = results.maxOrNull()
+            val idxLabel = results.indexOfFirst { it == highest!! }
+            val finalLabel = findLabel(idxLabel)
 
             tvLabelProbability.text = "Cyber: ${results[0]}\nEducational Places: ${results[1]}\nNeutral: ${results[2]}\nPrivate Places: ${results[3]}\nPublic Places: ${results[4]}\nWorkplaces: ${results[5]}"
             tvFinalLabel.text = "Highest: $highest\nFinal Label: $finalLabel"
