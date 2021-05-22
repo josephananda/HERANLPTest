@@ -3,6 +3,8 @@ package com.jadeappstudio.heranlptest
 import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.share424.sastrawi.Stemmer.StemmerFactory
+import com.share424.sastrawi.StopWordRemover.StopWordRemoverFactory
 import kotlinx.android.synthetic.main.activity_predict.*
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
@@ -23,6 +25,9 @@ class PredictActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_predict)
 
+        val stemmer = StemmerFactory(applicationContext).create()
+        val stopwordRemover = StopWordRemoverFactory(applicationContext).create()
+
         // Init the classifier.
         val classifier = Classifier( this , "word_dict.json" , INPUT_MAXLEN )
         // Init TFLiteInterpreter
@@ -40,17 +45,20 @@ class PredictActivity : AppCompatActivity() {
         })
 
         btnPredict.setOnClickListener {
+            val stemmed = stemmer.stem(etTweetText.editText!!.text.toString().toLowerCase().trim())
+            val stopword = stopwordRemover.remove(stemmed)
+            if (stopword.isNotEmpty()) {
+                tvStemmed.text = "$stopword"
+                val tokenizedMessage = classifier.tokenize(stopword)
+                //var paddedMessage = classifier.padSequence(tokenizedMessage)
+                val results = classifySequence(tokenizedMessage)
 
-            val tokenizedMessage = classifier.tokenize(etTweetText.editText!!.text.toString().toLowerCase().trim())
-            //var paddedMessage = classifier.padSequence(tokenizedMessage)
-            val results = classifySequence(tokenizedMessage)
-
-            val highest = results.maxOrNull()
-            val idxLabel = results.indexOfFirst { it == highest!! }
-            val finalLabel = findLabel(idxLabel)
-
-            tvLabelProbability.text = "Cyber: ${results[0]}\nEducational Places: ${results[1]}\nNeutral: ${results[2]}\nPrivate Places: ${results[3]}\nPublic Places: ${results[4]}\nWorkplaces: ${results[5]}"
-            tvFinalLabel.text = "Highest: $highest\nFinal Label: $finalLabel"
+                val highest = results.maxOrNull()
+                val idxLabel = results.indexOfFirst { it == highest!! }
+                val finalLabel = findLabel(idxLabel)
+                tvLabelProbability.text = "Cyber: ${results[0]}\nEducational Places: ${results[1]}\nNeutral: ${results[2]}\nPrivate Places: ${results[3]}\nPublic Places: ${results[4]}\nWorkplaces: ${results[5]}"
+                tvFinalLabel.text = "Highest: $highest\nFinal Label: $finalLabel"
+            }
         }
     }
 

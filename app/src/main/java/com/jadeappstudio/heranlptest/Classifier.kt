@@ -31,7 +31,7 @@ class Classifier(context: Context, jsonFilename: String , inputMaxLen : Int ) {
      */
     // Load the contents of the vocab ( see assets/word_dict.json )
     private fun loadJSONFromAsset(filename : String? ): String? {
-        var json: String?
+        val json: String?
         try {
             val inputStream = context!!.assets.open(filename!! )
             val size = inputStream.available()
