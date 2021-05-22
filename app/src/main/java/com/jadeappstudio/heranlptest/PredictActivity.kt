@@ -3,7 +3,7 @@ package com.jadeappstudio.heranlptest
 import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_predict.*
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.io.IOException
