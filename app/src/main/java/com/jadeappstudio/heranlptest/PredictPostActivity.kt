@@ -15,9 +15,6 @@ class PredictPostActivity : AppCompatActivity() {
     // Name of TFLite model ( in /assets folder ).
     private val MODEL_ASSETS_PATH = "modelpost.tflite"
 
-    // Max Length of input sequence. The input shape for the model will be ( None , INPUT_MAXLEN ).
-    private val INPUT_MAXLEN = 45
-
     private var tfLiteInterpreter: Interpreter? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +24,7 @@ class PredictPostActivity : AppCompatActivity() {
         val stopwordRemover = StopWordRemoverFactory(applicationContext).create()
 
         // Init the classifier.
-        val classifier = Classifier(this, "word_dict_post.json", INPUT_MAXLEN)
+        val classifier = Classifier(this, "word_dict_post.json")
         // Init TFLiteInterpreter
         tfLiteInterpreter = Interpreter(loadModelFile())
 

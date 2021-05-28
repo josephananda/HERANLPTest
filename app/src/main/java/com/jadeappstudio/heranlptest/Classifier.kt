@@ -6,7 +6,7 @@ import java.io.IOException
 import java.util.*
 import kotlin.collections.HashMap
 
-class Classifier(context: Context, jsonFilename: String, inputMaxLen: Int) {
+class Classifier(context: Context, jsonFilename: String) {
 
     private var context: Context? = context
 
