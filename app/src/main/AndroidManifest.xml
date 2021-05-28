@@ -9,7 +9,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HERANLPTest">
-        <activity android:name=".PredictActivity">
+        <activity android:name=".PredictPostActivity"></activity>
+        <activity android:name=".PredictLaporanActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
