@@ -13,9 +13,6 @@ class Classifier(context: Context, jsonFilename: String, inputMaxLen: Int) {
     // Filename for the exported vocab ( .json )
     private var filename: String? = jsonFilename
 
-    // Max length of the input sequence for the given model.
-    private var maxlen: Int = inputMaxLen
-
     private var vocabData: HashMap<String, Int>? = null
 
     /**
