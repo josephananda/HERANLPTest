@@ -10,7 +10,7 @@ class Classifier(context: Context, jsonFilename: String) {
 
     private var context: Context? = context
 
-    // Filename for the exported vocab ( .json )
+    //Filename for the exported vocab ( .json )
     private var filename: String? = jsonFilename
 
     private var vocabData: HashMap<String, Int>? = null
@@ -20,7 +20,6 @@ class Classifier(context: Context, jsonFilename: String) {
      * @param filename json file name
      * @return String
      */
-    // Load the contents of the vocab ( see assets/word_dict.json )
     private fun loadJSONFromAsset(filename: String?): String? {
         val json: String?
         try {
@@ -49,14 +48,12 @@ class Classifier(context: Context, jsonFilename: String) {
      * @param message the text that the user want to predict
      * @return IntArray
      */
-    // Tokenize the given sentence
     fun tokenize(message: String): IntArray {
         val parts: List<String> = message.split(" ")
         val tokenizedMessage = ArrayList<Int>()
         for (part in parts) {
             if (part.trim() != "") {
-                var index: Int? = 0
-                index = if (vocabData!![part] == null) {
+                val index: Int? = if (vocabData!![part] == null) {
                     0
                 } else {
                     vocabData!![part]
@@ -65,6 +62,31 @@ class Classifier(context: Context, jsonFilename: String) {
             }
         }
         return tokenizedMessage.toIntArray()
+    }
+
+    /**
+     * A method to pad the given sequence (to a fixed & same length) with zeros
+     * @param sequence the sequence of the text
+     * @return IntArray
+     */
+    fun padSequence(sequence: IntArray): IntArray {
+        val maxlen = 50
+        return when {
+            sequence.size > maxlen -> {
+                sequence.sliceArray(0..maxlen)
+            }
+            sequence.size < maxlen -> {
+                val array = ArrayList<Int>()
+                array.addAll(sequence.asList())
+                for (i in array.size until maxlen) {
+                    array.add(0)
+                }
+                array.toIntArray()
+            }
+            else -> {
+                sequence
+            }
+        }
     }
 
     /**

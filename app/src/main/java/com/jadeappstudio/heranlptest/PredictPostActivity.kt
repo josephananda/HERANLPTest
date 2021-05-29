@@ -6,14 +6,16 @@ import com.share424.sastrawi.Stemmer.StemmerFactory
 import com.share424.sastrawi.StopWordRemover.StopWordRemoverFactory
 import kotlinx.android.synthetic.main.activity_predict_post.*
 import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.Interpreter.Options
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import java.util.*
 
 class PredictPostActivity : AppCompatActivity() {
-    // Name of TFLite model ( in /assets folder ).
-    private val MODEL_ASSETS_PATH = "modelpost.tflite"
+    //Name of TFLite model (in /assets folder)
+    private val modelAssetPath = "modelpost.tflite"
 
     private var tfLiteInterpreter: Interpreter? = null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,20 +25,22 @@ class PredictPostActivity : AppCompatActivity() {
         val stemmer = StemmerFactory(applicationContext).create()
         val stopwordRemover = StopWordRemoverFactory(applicationContext).create()
 
-        // Init the classifier.
+        //Instantiate the classifier
         val classifier = Classifier(this, "word_dict_post.json")
-        // Init TFLiteInterpreter
-        tfLiteInterpreter = Interpreter(loadModelFile())
+        //Instantiate the TFLiteInterpreter
+        val options = Options()
+        tfLiteInterpreter = Interpreter(loadModelFile(), options)
 
         classifier.processVocab()
 
         btnPredict.setOnClickListener {
-            val stemmed = stemmer.stem(etTweetText.editText!!.text.toString().toLowerCase().trim())
+            val stemmed = stemmer.stem(etTweetText.editText!!.text.toString().toLowerCase(Locale.ROOT).trim())
             val stopword = stopwordRemover.remove(stemmed)
             if (stopword.isNotEmpty()) {
                 tvStemmed.text = "$stopword"
                 val tokenizedMessage = classifier.tokenize(stopword)
-                val results = classifySequence(tokenizedMessage)
+                val paddedMessage = classifier.padSequence(tokenizedMessage)
+                val results = classifySequence(paddedMessage)
 
                 val highest = results.maxOrNull()
                 val idxLabel = results.indexOfFirst { it == highest!! }
@@ -53,7 +57,7 @@ class PredictPostActivity : AppCompatActivity() {
      * @param idx Index of the highest label
      * @return String of the label
      */
-    fun findLabel(idx: Int): String {
+    private fun findLabel(idx: Int): String {
         var label = ""
         when (idx) {
             0 -> label = "Lokasi Kerja"
@@ -66,7 +70,6 @@ class PredictPostActivity : AppCompatActivity() {
         return label
     }
 
-
     /**
      * A method to load the TFLite Model
      * @throws IOException
@@ -74,7 +77,7 @@ class PredictPostActivity : AppCompatActivity() {
      */
     @Throws(IOException::class)
     private fun loadModelFile(): MappedByteBuffer {
-        val assetFileDescriptor = assets.openFd(MODEL_ASSETS_PATH)
+        val assetFileDescriptor = assets.openFd(modelAssetPath)
         val fileInputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
         val fileChannel = fileInputStream.channel
         val startOffset = assetFileDescriptor.startOffset
@@ -87,11 +90,11 @@ class PredictPostActivity : AppCompatActivity() {
      * @param sequence array of tokenized text
      * @return FloatArray
      */
-    // Perform inference, given the input sequence.
+    //Perform inference, given the input sequence
     private fun classifySequence(sequence: IntArray): FloatArray {
-        // Input shape -> ( 1 , INPUT_MAXLEN )
+        //Input shape -> (1 , inputPaddedSequenceLength) -> (1,50)
         val inputs: Array<FloatArray> = arrayOf(sequence.map { it.toFloat() }.toFloatArray())
-        // Output shape -> ( 1 , 6 ) ( as numClasses = 6 )
+        //Output shape -> (1,6) (as numClasses = 6)
         val outputs: Array<FloatArray> = arrayOf(FloatArray(6))
         tfLiteInterpreter?.run(inputs, outputs)
         return outputs[0]
