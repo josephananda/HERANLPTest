@@ -7,13 +7,23 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.telephony.SmsManager
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.OnCompleteListener
+import kotlinx.android.synthetic.main.activity_location.*
 import kotlinx.android.synthetic.main.activity_sos.*
+import java.io.IOException
+import java.util.*
 
 
 class SOSActivity : AppCompatActivity() {
@@ -21,27 +31,32 @@ class SOSActivity : AppCompatActivity() {
     val SMS_SENT_ACTION = "com.jadeappstudio.heranlptest.SMS_SENT_ACTION"
     val SMS_DELIVERED_ACTION = "com.jadeappstudio.heranlptest.SMS_DELIVERED_ACTION"
 
+    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sos)
 
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(this@SOSActivity)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED) {
+            if (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED) {
                 Log.d("permission", "permission denied to SEND_SMS - requesting it")
-                val permissions = arrayOf(Manifest.permission.SEND_SMS)
+                val permissions = arrayOf(Manifest.permission.SEND_SMS, Manifest.permission.ACCESS_FINE_LOCATION)
                 requestPermissions(permissions, 1)
             }
         }
 
         btnSend.setOnClickListener {
-            var phoneNum = etPhoneNumber.editText?.text.toString()
-            var smsBody = etMessage.editText?.text.toString()
+            val phoneNum = etPhoneNumber.editText?.text.toString()
+            //val smsBody = etMessage.editText?.text.toString()
 
             if (phoneNum.isEmpty()) {
                 Toast.makeText(applicationContext, "Please Enter a Phone Number", Toast.LENGTH_LONG)
                     .show()
             } else {
-                sendSMS(phoneNum, smsBody)
+                showLocation(phoneNum)
             }
         }
 
@@ -62,7 +77,7 @@ class SOSActivity : AppCompatActivity() {
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 etPhoneNumber.editText?.setText("")
-                etMessage.editText?.setText("")
+                //etMessage.editText?.setText("")
                 deliveryStatus.setText("SMS Delivered")
             }
         }, IntentFilter(SMS_DELIVERED_ACTION))
@@ -121,5 +136,48 @@ class SOSActivity : AppCompatActivity() {
                 ), PendingIntent.getBroadcast(this, 0, Intent(SMS_DELIVERED_ACTION), 0)
             )
         }
+    }
+
+    fun showLocation(phoneNumber: String) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        fusedLocationProviderClient.lastLocation.addOnCompleteListener(OnCompleteListener<Location> {
+            var location: Location = it.result
+            if (location != null) {
+                var geocoder: Geocoder = Geocoder(this@SOSActivity, Locale.getDefault())
+                try {
+                    var addressList: List<Address> =
+                        geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    var smsBody =
+                        "[DARURAT] Tolong kirim bantuan di ${addressList.get(0).getAddressLine(0)}"
+                    //tvLatitude.text = "Latitude: " + addressList.get(0).latitude
+                    //tvLongitude.text = "Longitude: " + addressList.get(0).longitude
+                    //tvAddressLine.text = "Alamat: " + addressList.get(0).getAddressLine(0)
+                    //tvLocality.text = "Kecamatan: " + addressList.get(0).locality
+                    //tvCountry.text = "Negara: " + addressList.get(0).countryName
+                    sendSMS(phoneNumber, smsBody)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            } else {
+                Toast.makeText(this@SOSActivity, "Location null error", Toast.LENGTH_SHORT)
+                    .show();
+            }
+        })
     }
 }
