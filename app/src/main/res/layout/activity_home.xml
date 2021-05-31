@@ -35,6 +35,12 @@
             android:layout_height="wrap_content"
             android:text="To SOS Screen" />
 
+        <Button
+            android:id="@+id/btnToLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="To Location Screen" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

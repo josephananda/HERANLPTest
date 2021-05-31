@@ -22,5 +22,9 @@ class HomeActivity : AppCompatActivity() {
         btnToSOS.setOnClickListener {
             startActivity(Intent(this@HomeActivity, SOSActivity::class.java))
         }
+
+        btnToLocation.setOnClickListener {
+            startActivity(Intent(this@HomeActivity, LocationActivity::class.java))
+        }
     }
 }
